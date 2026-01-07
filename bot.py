@@ -33,9 +33,7 @@ logger = logging.getLogger(__name__)
 # ----------------------------
 DB_PATH = "bot.db"
 
-TOKEN = os.getenv("BOT_TOKEN")
-if not TOKEN:
-    raise ValueError("BOT_TOKEN не установлен!")
+TOKEN = "8411595106:AAE0IkZRF1yGxbo8Mnte1WFE8LA_j2sN7vs"
 
 ADMIN_USERNAMES = ["Boss_Jendos", "Alexandr_Vellutto"]  # без @
 
