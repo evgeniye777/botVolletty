@@ -38,17 +38,17 @@ TOKEN = "8411595106:AAE0IkZRF1yGxbo8Mnte1WFE8LA_j2sN7vs"
 ADMIN_USERNAMES = ["Boss_Jendos", "Alexandr_Vellutto"]  # без @
 
 TICKETS = [
-    {"id": 1, "name": "1000", "price": 100000},
-    {"id": 2, "name": "2000", "price": 200000},
-    {"id": 3, "name": "3000", "price": 300000},
-    {"id": 4, "name": "4000", "price": 400000},
-    {"id": 5, "name": "5000", "price": 500000},
-    {"id": 6, "name": "6000", "price": 600000},
-    {"id": 7, "name": "7000", "price": 700000},
-    {"id": 8, "name": "8000", "price": 800000},
-    {"id": 9, "name": "9000", "price": 900000},
-    {"id": 10, "name": "10000", "price": 1000000},
-    {"id": -1, "name": "Репост(бесплатный билет)", "price": 1000000},
+    {"id": 1, "name": "1000 (1 билет)", "price": 100000},
+    {"id": 2, "name": "2000 (2 билет)", "price": 200000},
+    {"id": 3, "name": "3000 (3 билет)", "price": 300000},
+    {"id": 4, "name": "4000 (4 билет)", "price": 400000},
+    {"id": 5, "name": "5000 (5 билет)", "price": 500000},
+    {"id": 6, "name": "6000 (6 билет)", "price": 600000},
+    {"id": 7, "name": "7000 (7 билет)", "price": 700000},
+    {"id": 8, "name": "8000 (8 билет)", "price": 800000},
+    {"id": 9, "name": "9000 (9 билет)", "price": 900000},
+    {"id": 10, "name": "10000 (10 билет)", "price": 1000000},
+    {"id": -1, "name": "Репост(бесплатный билет)", "price": 0},
 ]
 
 CARD_NUMBER = "2200 7020 1284 8458"
@@ -359,10 +359,9 @@ def get_repost_status(username: str) -> Optional[str]:
     conn.close()
     return row[0] if row else None
     
-def get_lottery_data() -> List[Tuple[int, str, int]]:
+def get_lottery_data() -> List[Tuple[int, str, int, int]]:
     """
-    Возвращает данные для лотереи: [(user_id, fio, total_tickets), ...]
-    total_tickets = сумма всех ticket_id (1-10) + 1 за каждый репост (-1)
+    Возвращает данные для лотереи: [(user_id, fio, total_tickets, total_reposts), ...].
     """
     conn = _connect()
     cursor = conn.cursor()
@@ -371,12 +370,8 @@ def get_lottery_data() -> List[Tuple[int, str, int]]:
         SELECT 
             u.rowid,
             u.fio,
-            SUM(
-                CASE 
-                    WHEN p.ticket_id = -1 THEN 1
-                    ELSE p.ticket_id
-                END
-            ) as total_tickets
+            SUM(CASE WHEN p.ticket_id = -1 THEN 1 ELSE p.ticket_id END) AS total_tickets,
+            SUM(CASE WHEN p.ticket_id = -1 THEN 1 ELSE 0 END) AS total_reposts
         FROM users u
         JOIN (SELECT DISTINCT user_username, ticket_id FROM purchases) p 
             ON u.username = p.user_username
@@ -391,10 +386,10 @@ def get_lottery_data() -> List[Tuple[int, str, int]]:
     
 def format_lottery_text() -> str:
     """
-    Форматировать список участников лотереи в текстовом виде
+    Форматирует список участников лотереи в текстовом виде.
     
     Returns:
-        str: Отформатированный текст со списком участников
+        str: Отформатированный текст со списком участников.
     """
     lottery_data = get_lottery_data()
     
@@ -403,20 +398,23 @@ def format_lottery_text() -> str:
     
     text = "📋 Список участников лотереи:\n\n"
     total_tickets = 0
+    total_reposts = 0
     
-    for user_id, fio, tickets_count in lottery_data:
+    for user_id, fio, tickets_count, user_reposts in lottery_data:
         text += (
             f"{user_id}) {fio}\n"
             f"|    Кол-во билетов: {tickets_count}\n"
             f"{'‾' * 30}\n\n"
         )
         total_tickets += tickets_count
+        total_reposts += user_reposts
     
     # Добавляем итоговую информацию
     text += (
         f"{'═' * 30}\n"
         f"📊 Всего участников: {len(lottery_data)}\n"
         f"🎫 Всего билетов: {total_tickets}\n"
+        f"🎁 Всего Репостных билетов: {total_reposts}\n"
         f"📈 Среднее билетов на участника: {total_tickets / len(lottery_data):.1f}"
     )
     
