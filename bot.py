@@ -494,7 +494,7 @@ async def send_tickets_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 keyboard.append([InlineKeyboardButton(f"{ticket['name']}", callback_data=f"buy_{ticket['id']}")])
         else:
             # Обычный билет
-            keyboard.append([InlineKeyboardButton(f"{ticket['name']} руб", callback_data=f"buy_{ticket['id']}")])
+            keyboard.append([InlineKeyboardButton(f"{ticket['name']}", callback_data=f"buy_{ticket['id']}")])
     
     keyboard.append([InlineKeyboardButton("Мои купленные билеты", callback_data="my_tickets")])
     
@@ -796,7 +796,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 # Обычный билет с оплатой
                 await query.edit_message_text(
-                    f"Для покупки билета '{ticket['name']}' руб переведите {ticket['price'] / 100:.2f} руб на карту:\n"
+                    f"Для покупки билета '{ticket['name']}' переведите {ticket['price'] / 100:.2f} руб на карту:\n"
                     f"{CARD_NUMBER}\n\n"
                     f"Затем скиньте скриншот с фактом перевода СБП "
                     f"(на скрине должно быть видно время отправки и имя отправителя).",
@@ -827,7 +827,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     ticket_names.append(ticket_name(tid_int))
                 else:
                     # Обычный билет — с номером
-                    ticket_names.append(f"{ticket_name(tid_int)} ({tid_int} {ticket_word(tid_int)})")
+                    ticket_names.append(f"{ticket_name(tid_int)}")
             
             # Форматируем билеты: первый на одной строке, остальные с отступом
             if len(ticket_names) == 1:
@@ -983,7 +983,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
             else:
                 ticket_number = ticket_id
-                ticket_name_str = f"{ticket_name(ticket_id)} ({ticket_number} {ticket_word(ticket_number)})"
+                ticket_name_str = f"{ticket_name(ticket_id)})"
                 text += (
                     f"{i}) - Покупка: {ticket_name_str}\n"
                     f"|   - Статус: {status_ru}\n"
@@ -1237,7 +1237,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         keyboard.append([InlineKeyboardButton(f"{ticket['name']}", callback_data=f"buy_{ticket['id']}")])
                 else:
                     # Обычный билет
-                    keyboard.append([InlineKeyboardButton(f"{ticket['name']} руб", callback_data=f"buy_{ticket['id']}")])
+                    keyboard.append([InlineKeyboardButton(f"{ticket['name']}", callback_data=f"buy_{ticket['id']}")])
             
             keyboard.append([InlineKeyboardButton("Мои купленные билеты", callback_data="my_tickets")])
             keyboard.append([InlineKeyboardButton("Вернуться к меню организатора", callback_data="back_to_admin")])
