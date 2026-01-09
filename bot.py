@@ -856,7 +856,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"{'‾' * 30}\n\n"
             )
         
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=text, reply_markup=reply_markup)
+        await query.edit_message_text(text, reply_markup=reply_markup)
     
     # --- Полный список ---
     elif data == "full_list":
@@ -1272,24 +1272,8 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # --- Вернуться к меню организатора ---
     elif data == "back_to_admin":
-        # Вместо полного переопределения сообщения оставляем его и меняем только клавиатуру
-        keyboard = [
-            [InlineKeyboardButton("Список тех кто оплатил", callback_data="paid_list")],
-            [InlineKeyboardButton("Полный список", callback_data="full_list")],
-            [InlineKeyboardButton("Список непроверенных оплат", callback_data="pending_payments")],
-            [InlineKeyboardButton("Список для лотереи", callback_data="lottery_list")],
-            [InlineKeyboardButton("Запуск в роли клиента", callback_data="client_mode")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_reply_markup(reply_markup=reply_markup)
+        await send_admin_menu(update, context)
         
-    elif data == "locked_repost":
-        keyboard = [[InlineKeyboardButton("📋 К списку билетов", callback_data="back_to_tickets")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(
-            "Бесплатный билет за Репост заблокирован для вас. Чтобы разблокировать данную возможность, нужно приобрести хотя бы один любой платный билет.",
-            reply_markup=reply_markup
-        )
 # ----------------------------
 # Main
 # ----------------------------
