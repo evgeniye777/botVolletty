@@ -1272,7 +1272,16 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # --- Вернуться к меню организатора ---
     elif data == "back_to_admin":
-        await send_admin_menu(update, context)
+        # Вместо полного переопределения сообщения оставляем его и меняем только клавиатуру
+        keyboard = [
+            [InlineKeyboardButton("Список тех кто оплатил", callback_data="paid_list")],
+            [InlineKeyboardButton("Полный список", callback_data="full_list")],
+            [InlineKeyboardButton("Список непроверенных оплат", callback_data="pending_payments")],
+            [InlineKeyboardButton("Список для лотереи", callback_data="lottery_list")],
+            [InlineKeyboardButton("Запуск в роли клиента", callback_data="client_mode")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_reply_markup(reply_markup=reply_markup)
         
     elif data == "locked_repost":
         keyboard = [[InlineKeyboardButton("📋 К списку билетов", callback_data="back_to_tickets")]]
