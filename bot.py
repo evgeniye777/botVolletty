@@ -856,7 +856,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"{'‾' * 30}\n\n"
             )
         
-        await query.edit_message_text(text, reply_markup=reply_markup)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=text, reply_markup=reply_markup)
     
     # --- Полный список ---
     elif data == "full_list":
