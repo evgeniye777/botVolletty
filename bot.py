@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 # ----------------------------
 DB_PATH = "bot.db"
 
-TOKEN = "8411595106:AAE0IkZRF1yGxbo8Mnte1WFE8LA_j2sN7vs"
+TOKEN = os.getenv("BOT_TOKEN")
 
 ADMIN_USERNAMES = ["Boss_Jendos", "Alexandr_Vellutto"]  # без @
 
@@ -476,10 +476,18 @@ async def send_admin_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def send_tickets_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = update.effective_user.username
     keyboard = []
-    
+
     # Проверяем статус репоста
     repost_status = get_repost_status(username)
-    
+
+    # Проверяем наличие любых приобретённых билетов у пользователя
+    has_any_ticket = False
+    user_tickets = get_user_tickets(username)
+    for _, ticket_id, _ in user_tickets:
+        if ticket_id != -1:  # Любой билет, кроме репостного
+            has_any_ticket = True
+            break
+
     for ticket in TICKETS:
         if ticket['id'] == -1:
             # Это репост — обрабатываем особым образом
@@ -489,20 +497,25 @@ async def send_tickets_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
             elif repost_status == 'pending':
                 # Репост на проверке — показываем некликабельную кнопку
                 keyboard.append([InlineKeyboardButton("Репост (на проверке) ⏳", callback_data="repost_pending")])
-            elif repost_status == 'fake' or repost_status is None:
-                # Репост был фейком или не отправлялся — показываем обычную кнопку
+            elif has_any_ticket:
+                # Пользователь приобрёл хотя бы один билет → кнопка доступна
                 keyboard.append([InlineKeyboardButton(f"{ticket['name']}", callback_data=f"buy_{ticket['id']}")])
+            else:
+                # Пользователь не купил ни одного билета → блокируем доступ к репосту
+                keyboard.append([
+                    InlineKeyboardButton("🔒 Репост (бесплатный билет)", callback_data="locked_repost")
+                ])
         else:
             # Обычный билет
             keyboard.append([InlineKeyboardButton(f"{ticket['name']}", callback_data=f"buy_{ticket['id']}")])
-    
+
     keyboard.append([InlineKeyboardButton("Мои купленные билеты", callback_data="my_tickets")])
-    
+
     if is_admin(username):
         keyboard.append([InlineKeyboardButton("Вернуться к меню организатора", callback_data="back_to_admin")])
-    
+
     reply_markup = InlineKeyboardMarkup(keyboard)
-    
+
     if update.message:
         msg = await update.message.reply_text("Выберите билет для покупки:", reply_markup=reply_markup)
         if "bot_messages" not in context.user_data:
@@ -1260,6 +1273,12 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # --- Вернуться к меню организатора ---
     elif data == "back_to_admin":
         await send_admin_menu(update, context)
+        
+    elif data == "locked_repost":
+        await query.answer("Бесплатный билет за Репост заблокирован для вас. Чтобы разблокировать данную возможность, нужно приобрести хотя бы один любой платный билет.", show_alert=True)
+        keyboard = [[InlineKeyboardButton("📋 К списку билетов", callback_data="back_to_tickets")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_reply_markup(reply_markup=reply_markup)
 # ----------------------------
 # Main
 # ----------------------------
