@@ -1275,7 +1275,12 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await send_admin_menu(update, context)
         
     elif data == "locked_repost":
-        await query.answer("Бесплатный билет за Репост заблокирован для вас. Чтобы разблокировать данную возможность, нужно приобрести хотя бы один любой платный билет.", show_alert=True)
+        message_text = "Бесплатный билет за Репост заблокирован для вас. Чтобы разблокировать данную возможность, нужно приобрести хотя бы один любой платный билет."
+    
+        # Отображаем сообщение пользователю
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=message_text)
+    
+        # Оставляем возможность вернуться назад
         keyboard = [[InlineKeyboardButton("📋 К списку билетов", callback_data="back_to_tickets")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_reply_markup(reply_markup=reply_markup)
