@@ -35,6 +35,11 @@ DB_PATH = "bot.db"
 
 TOKEN = os.getenv("BOT_TOKEN")
 
+if TOKEN is None:
+    raise ValueError("The variable BOT_TOKEN must be defined in environment variables.")
+else:
+    logger.debug(f"BOT_TOKEN: {TOKEN}")
+
 ADMIN_USERNAMES = ["Boss_Jendos", "Alexandr_Vellutto"]  # без @
 
 TICKETS = [
