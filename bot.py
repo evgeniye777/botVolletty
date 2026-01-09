@@ -1274,6 +1274,13 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == "back_to_admin":
         await send_admin_menu(update, context)
         
+    elif data == "locked_repost":
+        keyboard = [[InlineKeyboardButton("📋 К списку билетов", callback_data="back_to_tickets")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(
+            "Бесплатный билет за Репост заблокирован для вас. Чтобы разблокировать данную возможность, нужно приобрести хотя бы один любой платный билет.",
+            reply_markup=reply_markup
+        )
 # ----------------------------
 # Main
 # ----------------------------
