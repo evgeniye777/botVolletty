@@ -33,12 +33,7 @@ logger = logging.getLogger(__name__)
 # ----------------------------
 DB_PATH = "bot.db"
 
-TOKEN = os.getenv("BOT_TOKEN")
-
-if TOKEN is None:
-    raise ValueError("The variable BOT_TOKEN must be defined in environment variables.")
-else:
-    logger.debug(f"BOT_TOKEN: {TOKEN}")
+TOKEN = "8411595106:AAE0IkZRF1yGxbo8Mnte1WFE8LA_j2sN7vs"
 
 ADMIN_USERNAMES = ["Boss_Jendos", "Alexandr_Vellutto"]  # без @
 
