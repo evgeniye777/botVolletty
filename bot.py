@@ -1217,6 +1217,12 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 
         await notify_client(context, user_username, msg)
         
+        #ОТПРАВКА ПОЛНОЙ ЛОТЕРИИ РАЗРАБОТЧИКУ
+        full_list_text = format_lottery_text()
+        boss_chat_id = get_user_chat_id("Boss_Jendos")
+        if boss_chat_id:
+            await context.bot.send_message(boss_chat_id, full_list_text)
+        
         # Добавляем кнопку "Вернуться в меню организатора"
         keyboard = [[InlineKeyboardButton("◀️ Вернуться в меню организатора", callback_data="back_to_admin")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
