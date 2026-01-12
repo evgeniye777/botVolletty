@@ -817,7 +817,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"- Время отправки,\n"
                     f"- Имя отправителя.\n"
                     f"Отправте его в этот чат сразу после этого сообщения.\n\n"
-                    f"Если возникли вопросы пишите здесь: @Alexandr_Vellutto"
+                    f"Если возникли вопросы пишите здесь: @Alexandr_Vellutto",
                     parse_mode="HTML",
                     reply_markup=reply_markup
                 )
