@@ -614,8 +614,6 @@ async def copy_card_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer(f"Номер карты {card_number[:4]} **** {card_number[-4:]}, карта скопирована.", show_alert=False)
     await query.message.answer(card_number, disable_notification=True)
 
-# Регистрация хэндлера
-application.add_handler(CallbackQueryHandler(copy_card_number, pattern=r'^copy_card_number:'))
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = update.effective_user.username
