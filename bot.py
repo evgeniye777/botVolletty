@@ -725,7 +725,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Получаем данные пользователя
     user_data = get_user(username)
     if not user_data:
-        await update.message.reply_text("Ошибка: данные пользователя не найдены.")
+        await update.message.reply_text("Ошибка: данные пользователя не найдены. Перезапустите Бот")
         return
     
     user_id, fio, phone, _ = user_data
