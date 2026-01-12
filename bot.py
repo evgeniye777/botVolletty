@@ -606,6 +606,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.user_data["step"] = "fio"
 
 
+# Хэндлер для кнопки "Копировать номер карты"
+async def copy_card_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    card_number = query.data.split(":")[1]
+    await query.answer(f"Номер карты {card_number[:4]} **** {card_number[-4:]}, карта скопирована.", show_alert=False)
+    await query.message.answer(card_number, disable_notification=True)
+
+# Регистрация хэндлера
+application.add_handler(CallbackQueryHandler(copy_card_number, pattern=r'^copy_card_number:'))
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = update.effective_user.username
     text = update.message.text
@@ -812,7 +823,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"Для покупки билета '{ticket['name']}' переведите {ticket['price'] / 100:.2f} руб на карту:\n"
                     f"<code>{CARD_NUMBER}</code>\n\n"
                     f"<b>Важно!</b>\n"
-                    f"✅ В назначении или цели платежа обязательно напишите: \"<b>На подарок</b>\"\n"
+                    f"✅ В назначении или цели платежа обязательно напишите: \"<b>НА ПОДАРОК</b>\"\n"
                     f"✅ Приложите скриншот перевода СБП, на котором видны:\n"
                     f"- Время отправки,\n"
                     f"- Имя отправителя.\n"
@@ -1293,13 +1304,6 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Бесплатный билет за Репост заблокирован для вас. Чтобы разблокировать данную возможность, нужно приобрести хотя бы один любой платный билет.",
             reply_markup=reply_markup
         )
-        
-# Хэндлер для кнопки "Копировать номер карты"
-@dp.callback_query_handler(lambda call: call.data.startswith("copy_card_number:"))
-async def copy_card_number(call: types.CallbackQuery):
-    card_number = call.data.split(":")[1]
-    await call.answer(f"Номер карты {card_number[:4]} **** {card_number[-4:]}, карта скопирована.", show_alert=False)
-    await call.message.answer(card_number, disable_notification=True)
 # ----------------------------
 # Main
 # ----------------------------
