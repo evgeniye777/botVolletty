@@ -472,7 +472,7 @@ async def send_admin_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if "bot_messages" not in context.user_data:
             context.user_data["bot_messages"] = []
         context.user_data["bot_messages"].append(msg.message_id)
-
+    
 async def send_tickets_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = update.effective_user.username
     keyboard = []
@@ -809,9 +809,12 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 # Обычный билет с оплатой
                 await query.edit_message_text(
-                    f"Для покупки билета `{ticket['name']}` переведите {ticket['price'] / 100:.2f} руб на карту:\n"
-                    f"`{CARD_NUMBER}`\n\n"
-                    f"Важно!\n"
+                    f"Для покупки билета {ticket['name']} переведите {ticket['price'] / 100:.2f} руб на карту:\n"
+                    f"{CARD_NUMBER}\n\n"
+                    f"Получатель:\n"
+                    f"Александр Сергеевич Р.\n"
+                    f"(Т-Банк)\n\n"
+                    f"Важно❗️❗️❗️\n"
                     f"✅ В назначении или цели платежа обязательно напишите: \"НА ПОДАРОК\"\n"
                     f"✅ Приложите скриншот перевода СБП, на котором видны:\n"
                     f"- Время отправки,\n"
