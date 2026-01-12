@@ -606,15 +606,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.user_data["step"] = "fio"
 
 
-# Хэндлер для кнопки "Копировать номер карты"
-async def copy_card_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    card_number = query.data.split(":")[1]
-    await query.answer(f"Номер карты {card_number[:4]} **** {card_number[-4:]}, карта скопирована.", show_alert=False)
-    await query.message.answer(card_number, disable_notification=True)
-
-
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = update.effective_user.username
     text = update.message.text
@@ -725,7 +716,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Получаем данные пользователя
     user_data = get_user(username)
     if not user_data:
-        await update.message.reply_text("Ошибка: данные пользователя не найдены. Перезапустите Бот")
+        await update.message.reply_text("Ошибка: данные пользователя не найдены.")
         return
     
     user_id, fio, phone, _ = user_data
@@ -819,16 +810,15 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 # Обычный билет с оплатой
                 await query.edit_message_text(
                     f"Для покупки билета '{ticket['name']}' переведите {ticket['price'] / 100:.2f} руб на карту:\n"
-                    f"<code>{CARD_NUMBER}</code>\n\n"
-                    f"<b>Важно!</b>\n"
-                    f"✅ В назначении или цели платежа обязательно напишите: \"<b>НА ПОДАРОК</b>\"\n"
+                    f"{CARD_NUMBER}\n\n"
+                    f"Важно!\n"
+                    f"✅ В назначении или цели платежа обязательно напишите: \"НА ПОДАРОК\"\n"
                     f"✅ Приложите скриншот перевода СБП, на котором видны:\n"
                     f"- Время отправки,\n"
                     f"- Имя отправителя.\n"
                     f"Отправьте его в этот чат сразу после этого сообщения.\n\n"
                     f"Если возникли вопросы, пишите здесь: @Alexandr_Vellutto",
-                    parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Копировать номер карты 📋", callback_data=f"copy_card_number:{CARD_NUMBER}")]])
+                    reply_markup=reply_markup
                 )
             
             context.user_data["awaiting_screenshot"] = ticket_id
