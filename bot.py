@@ -811,8 +811,11 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await query.edit_message_text(
                     f"Для покупки билета '{ticket['name']}' переведите {ticket['price'] / 100:.2f} руб на карту:\n"
                     f"{CARD_NUMBER}\n\n"
+                    f"<b>Важно!</b>\n"
+                    f"✅ В назначении или цели платежа обязательно напишите: \"<b>НА ПОДАРОК</b>\"\n"
                     f"Затем скиньте скриншот с фактом перевода СБП "
-                    f"(на скрине должно быть видно время отправки и имя отправителя).",
+                    f"(на скрине должно быть видно время отправки и имя отправителя).\n\n"
+                    f"Если возникли вопросы пишите здесь: @Alexandr_Vellutto",
                     reply_markup=reply_markup
                 )
             
