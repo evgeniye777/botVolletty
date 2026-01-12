@@ -691,6 +691,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = update.effective_user.username
+    
+    user_data = get_user(username)
+    if not user_data:
+        await update.message.reply_text("Ваш профиль не найден. Пожалуйста, начните регистрацию заново командой /start.")
+        return
+        
     ticket_id = context.user_data.get("awaiting_screenshot")
     
     if not ticket_id:
