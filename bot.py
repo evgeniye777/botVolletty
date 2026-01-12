@@ -812,10 +812,11 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"Для покупки билета '{ticket['name']}' переведите {ticket['price'] / 100:.2f} руб на карту:\n"
                     f"{CARD_NUMBER}\n\n"
                     f"<b>Важно!</b>\n"
-                    f"✅ В назначении или цели платежа обязательно напишите: \"<b>На подарок</b>\"\n"
+                    f"✅ В назначении или цели платежа обязательно напишите: \"<b>НА ПОДАРОК</b>\"\n"
                     f"✅ Приложите скриншот перевода СБП, на котором видны:\n"
                     f"- Время отправки,\n"
-                    f"- Имя отправителя.",
+                    f"- Имя отправителя.\n\n"
+                    f"Если возникли вопросы пишите здесь: @Alexandr_Vellutto",
                     parse_mode="HTML",
                     reply_markup=reply_markup
                 )
