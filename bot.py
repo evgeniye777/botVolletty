@@ -816,10 +816,10 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"✅ Приложите скриншот перевода СБП, на котором видны:\n"
                     f"- Время отправки,\n"
                     f"- Имя отправителя.\n"
-                    f"Отправте его в этот чат сразу после этого сообщения.\n\n"
-                    f"Если возникли вопросы пишите здесь: @Alexandr_Vellutto",
+                    f"Отправьте его в этот чат сразу после этого сообщения.\n\n"
+                    f"Если возникли вопросы, пишите здесь: @Alexandr_Vellutto",
                     parse_mode="HTML",
-                    reply_markup=reply_markup
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Копировать номер карты 📋", callback_data=f"copy_card_number:{CARD_NUMBER}")]])
                 )
             
             context.user_data["awaiting_screenshot"] = ticket_id
@@ -1293,6 +1293,13 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Бесплатный билет за Репост заблокирован для вас. Чтобы разблокировать данную возможность, нужно приобрести хотя бы один любой платный билет.",
             reply_markup=reply_markup
         )
+        
+# Хэндлер для кнопки "Копировать номер карты"
+@dp.callback_query_handler(lambda call: call.data.startswith("copy_card_number:"))
+async def copy_card_number(call: types.CallbackQuery):
+    card_number = call.data.split(":")[1]
+    await call.answer(f"Номер карты {card_number[:4]} **** {card_number[-4:]}, карта скопирована.", show_alert=False)
+    await call.message.answer(card_number, disable_notification=True)
 # ----------------------------
 # Main
 # ----------------------------
