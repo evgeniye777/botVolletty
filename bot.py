@@ -809,8 +809,8 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 # Обычный билет с оплатой
                 await query.edit_message_text(
-                    f"Для покупки билета '{ticket['name']}' переведите {ticket['price'] / 100:.2f} руб на карту:\n"
-                    f"{CARD_NUMBER}\n\n"
+                    f"Для покупки билета `{ticket['name']}` переведите {ticket['price'] / 100:.2f} руб на карту:\n"
+                    f"`{CARD_NUMBER}`\n\n"
                     f"Важно!\n"
                     f"✅ В назначении или цели платежа обязательно напишите: \"НА ПОДАРОК\"\n"
                     f"✅ Приложите скриншот перевода СБП, на котором видны:\n"
@@ -818,6 +818,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"- Имя отправителя.\n"
                     f"Отправьте его в этот чат сразу после этого сообщения.\n\n"
                     f"Если возникли вопросы, пишите здесь: @Alexandr_Vellutto",
+                    parse_mode="MarkdownV2",
                     reply_markup=reply_markup
                 )
             
