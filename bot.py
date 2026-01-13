@@ -241,9 +241,10 @@ def get_paid_users() -> List[Tuple[int, str, Optional[str], Optional[str], str]]
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT u.rowid, u.username, u.fio, u.phone, GROUP_CONCAT(p.ticket_id) as tickets
+        SELECT u.rowid, u.username, u.fio, u.phone, GROUP_CONCAT(pay.ticket_id) as tickets
         FROM users u
-        JOIN purchases p ON u.username = p.user_username
+        JOIN payments pay ON u.username = pay.user_username
+        WHERE pay.status = 'confirmed'
         GROUP BY u.username
         ORDER BY u.rowid
         """
@@ -330,7 +331,7 @@ def get_user_tickets(username: str) -> List[Tuple[int, int, str]]:
         SELECT id, ticket_id, status
         FROM payments
         WHERE user_username = ? AND status != 'fake'
-        ORDER BY id DESC
+        ORDER BY id ASC
         """,
         (username,)
     )
@@ -362,6 +363,7 @@ def get_repost_status(username: str) -> Optional[str]:
 def get_lottery_data() -> List[Tuple[int, str, int, int]]:
     """
     Возвращает данные для лотереи: [(user_id, fio, total_tickets, total_reposts), ...].
+    Теперь суммирует на основе подтверждённых платежей из таблицы payments.
     """
     conn = _connect()
     cursor = conn.cursor()
@@ -370,12 +372,11 @@ def get_lottery_data() -> List[Tuple[int, str, int, int]]:
         SELECT 
             u.rowid,
             u.fio,
-            SUM(CASE WHEN p.ticket_id = -1 THEN 1 ELSE p.ticket_id END) AS total_tickets,
-            SUM(CASE WHEN p.ticket_id = -1 THEN 1 ELSE 0 END) AS total_reposts
+            SUM(CASE WHEN pay.ticket_id = -1 THEN 1 ELSE pay.ticket_id END) AS total_tickets,
+            SUM(CASE WHEN pay.ticket_id = -1 THEN 1 ELSE 0 END) AS total_reposts
         FROM users u
-        JOIN (SELECT DISTINCT user_username, ticket_id FROM purchases) p 
-            ON u.username = p.user_username
-        WHERE u.fio IS NOT NULL
+        JOIN payments pay ON u.username = pay.user_username
+        WHERE u.fio IS NOT NULL AND pay.status = 'confirmed'
         GROUP BY u.rowid, u.fio
         ORDER BY u.rowid
         """
@@ -607,6 +608,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+     
     username = update.effective_user.username
     text = update.message.text
     
@@ -615,6 +617,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data.clear()
         await start(update, context)
         return
+        
+    user_data = get_user(username)
+    if not user_data:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="Ваш профиль не найден. Пожалуйста, начните регистрацию заново командой /start."
+        )
+        return
+        
+    
     
     # Проверяем, ждём ли мы причину от организатора
     if "awaiting_fake_reason" in context.user_data and is_admin(username):
@@ -694,7 +706,10 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     user_data = get_user(username)
     if not user_data:
-        await update.message.reply_text("Ваш профиль не найден. Пожалуйста, начните регистрацию заново командой /start.")
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="Ваш профиль не найден. Пожалуйста, начните регистрацию заново командой /start."
+        )
         return
         
     ticket_id = context.user_data.get("awaiting_screenshot")
@@ -722,7 +737,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Получаем данные пользователя
     user_data = get_user(username)
     if not user_data:
-        await update.message.reply_text("Ошибка: данные пользователя не найдены.")
+        await update.callback_query.answer("Ошибка: данные пользователя не найдены.")
         return
     
     user_id, fio, phone, _ = user_data
@@ -792,17 +807,23 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = query.data
     username = update.effective_user.username
     
+    user_data = get_user(username)
+    if not user_data:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="Ваш профиль не найден. Пожалуйста, начните регистрацию заново командой /start."
+        )
+        return
+    
     # --- Покупка билета ---
     if data.startswith("buy_"):
         ticket_id = int(data.split("_")[1])
         ticket = next((t for t in TICKETS if t["id"] == ticket_id), None)
         if ticket:
-            keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data="back_to_tickets")]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            # Проверяем, это репост или обычный билет
             if ticket_id == -1:
-                # Это репост (бесплатный билет)
+                # Бесплатный билет (репост)
+                keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data="back_to_tickets")]]
+                reply_markup = InlineKeyboardMarkup(keyboard)
                 await query.edit_message_text(
                     f"Для получения бесплатного билета:\n\n"
                     f"1. Сделайте репост розыгрыша с канала\n"
@@ -813,25 +834,84 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     reply_markup=reply_markup
                 )
             else:
-                # Обычный билет с оплатой
+                # Выбор банка для оплаты обычного билета
+                bank_choice_keyboard = [
+                    [InlineKeyboardButton("Т-Банк", callback_data=f"bank_TBank_{ticket_id}")],
+                    [InlineKeyboardButton("Другой Банк", callback_data=f"bank_Other_{ticket_id}")]
+                ]
+                reply_markup_bank = InlineKeyboardMarkup(bank_choice_keyboard)
                 await query.edit_message_text(
-                    f"Для покупки билета {ticket['name']} переведите {ticket['price'] / 100:.2f} руб на карту:\n"
-                    f"{CARD_NUMBER}\n\n"
-                    f"Получатель:\n"
-                    f"Александр Сергеевич Р.\n"
-                    f"(Т-Банк)\n\n"
-                    f"Важно❗️❗️❗️\n"
-                    f"✅ В назначении или цели платежа обязательно напишите: \"НА ПОДАРОК\"\n"
-                    f"✅ Приложите скриншот перевода СБП, на котором видны:\n"
-                    f"- Время отправки,\n"
-                    f"- Имя отправителя.\n"
-                    f"Отправьте его в этот чат сразу после этого сообщения.\n\n"
-                    f"Если возникли вопросы, пишите здесь: @Alexandr_Vellutto",
-                    reply_markup=reply_markup
+                    "Какой банк вы используете?",
+                    reply_markup=reply_markup_bank
                 )
-            
             context.user_data["awaiting_screenshot"] = ticket_id
     
+    # Т-Банк
+    elif data.startswith("bank_TBank_"):  
+        ticket_id = int(data.split("_")[2])
+        ticket = next((t for t in TICKETS if t["id"] == ticket_id), None)
+        if ticket:
+            qr_file_id = context.bot_data.get("qr_file_id")
+            caption = (
+                f"Для покупки билета {ticket['name']} переведите {ticket['price'] / 100:.2f} руб, используя QR-код ниже ⬇️\n\n"
+                f"Важно❗️❗️❗️\n"
+                f"✅ Приложите скриншот перевода, на котором видны:\n"
+                f"- Время отправки,\n"
+                f"- Имя отправителя.\n"
+                f"Отправьте его в этот чат сразу после QR кода.\n\n"
+                f"Если возникли вопросы, пишите здесь: @Alexandr_Vellutto"
+            )
+            keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data="back_to_tickets")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            if qr_file_id:
+                # Отправляем по file_id
+                try:
+                    await query.message.reply_photo(qr_file_id, caption=caption, reply_markup=reply_markup)
+                except Exception as e:
+                    logger.warning(f"QR file_id устарел: {e}")
+                    # Заново загружаем
+                    try:
+                        with open("qr.jpg", "rb") as qr_image:
+                            message = await query.message.reply_photo(qr_image, caption=caption, reply_markup=reply_markup)
+                            qr_file_id = message.photo[-1].file_id
+                            context.bot_data["qr_file_id"] = qr_file_id
+                    except Exception as e2:
+                        logger.error(f"Ошибка загрузки QR: {e2}")
+                        await query.edit_message_text("Ошибка загрузки QR-кода.")
+            else:
+                # Первая загрузка: отправляем из файла и получаем file_id
+                try:
+                    with open("qr.jpg", "rb") as qr_image:
+                        message = await query.message.reply_photo(qr_image, caption=caption, reply_markup=reply_markup)
+                        qr_file_id = message.photo[-1].file_id
+                        context.bot_data["qr_file_id"] = qr_file_id
+                except Exception as e:
+                    logger.error(f"Ошибка загрузки QR: {e}")
+                    await query.edit_message_text("Ошибка загрузки QR-кода.")
+
+    # Другой Банк
+    elif data.startswith("bank_Other_"):  
+        ticket_id = int(data.split("_")[2])
+        ticket = next((t for t in TICKETS if t["id"] == ticket_id), None)
+        if ticket:
+            keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data="back_to_tickets")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.edit_message_text(
+                f"Для покупки билета {ticket['name']} переведите {ticket['price'] / 100:.2f} руб на карту:\n"
+                f"{CARD_NUMBER}\n\n"
+                f"Получатель:\n"
+                f"Александр Сергеевич Р.\n"
+                f"(Т-Банк)\n\n"
+                f"Важно❗️❗️❗️\n"
+                f"✅ Приложите скриншот перевода СБП, на котором видны:\n"
+                f"- Время отправки,\n"
+                f"- Имя отправителя.\n"
+                f"Отправьте его в этот чат сразу после этого сообщения.\n\n"
+                f"Если возникли вопросы, пишите здесь: @Alexandr_Vellutto",
+                reply_markup=reply_markup
+            )
+            await query.message.reply_text(f"{CARD_NUMBER}")
     # --- Список оплативших ---
     elif data == "paid_list":
         paid_users = get_paid_users()
@@ -1016,6 +1096,13 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"|   - Статус: {status_ru}\n"
                     f"{'‾' * 30}\n\n"
                 )
+        
+        # Подсчитываем общее количество билетов
+        total_tickets = sum(ticket_id if ticket_id != -1 else 1 for _, ticket_id, status in user_tickets if status == 'confirmed')
+     
+        # Добавляем итоговую информацию
+        text += f"🎫 Всего подтверждённых билетов: {total_tickets}\n\n"
+        text += "🛍ПОКУПАЙТЕ БОЛЬШЕ БИЛЕТОВ ЧТОБЫ УВЕЛИЧИТЬ ВЕРОЯТНОСТЬ ВЫИГРАТЬ🎁"
         
         # Добавляем кнопку "Назад"
         keyboard = [[InlineKeyboardButton("◀️ Назад к билетам", callback_data="back_to_tickets")]]
