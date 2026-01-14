@@ -854,7 +854,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             qr_file_id = context.bot_data.get("qr_file_id")
             caption = (
                 f"Для покупки билета {ticket['name']} переведите {ticket['price'] / 100:.2f} руб, используя QR-код выше ⬆️\n\n"
-                f"Важно❗️❗️❗️\n"
+                f"ВАЖНО❗️❗️❗️\n"
                 f"✅ Приложите скриншот перевода, на котором видны:\n"
                 f"- Время отправки,\n"
                 f"- Имя отправителя.\n"
