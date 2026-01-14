@@ -853,12 +853,12 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if ticket:
             qr_file_id = context.bot_data.get("qr_file_id")
             caption = (
-                f"Для покупки билета {ticket['name']} переведите {ticket['price'] / 100:.2f} руб, используя QR-код ниже ⬇️\n\n"
+                f"Для покупки билета {ticket['name']} переведите {ticket['price'] / 100:.2f} руб, используя QR-код выше ⬆️\n\n"
                 f"Важно❗️❗️❗️\n"
                 f"✅ Приложите скриншот перевода, на котором видны:\n"
                 f"- Время отправки,\n"
                 f"- Имя отправителя.\n"
-                f"Отправьте его в этот чат сразу после QR кода.\n\n"
+                f"Отправьте его в этот чат сразу после QR-кода.\n\n"
                 f"Если возникли вопросы, пишите здесь: @Alexandr_Vellutto"
             )
             keyboard = [[InlineKeyboardButton("◀️ Назад", callback_data="back_to_tickets")]]
